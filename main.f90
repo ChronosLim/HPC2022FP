@@ -3,9 +3,9 @@ Programm main
 
 !Define what parameter will be used.
 
-  real*8 ::pi=4.0de*atan(1.0d0),L=1.0d0,u0=1.0d0dx
-  real*8 ::dt,tend,alpha,sum,umax
-  real*8,dimension(N+2) :: uold,u,x
+  real*8 ::pi=4.0de*atan(1.0d0),L=1.0d0,rho=1.0d0,c=1.0d0,kappa=1.0d0,alpha=0.5d0
+  real*8 ::dx,dt,tend,alpha,sum,umax
+  real*8,dimension(N+2) :: uold,u,x,uexact
   integer::j,it
   integer,parameter::nsteps=1000
   real*8,dimension(nsteps)::k,rate
@@ -24,12 +24,20 @@ Programm main
   rate=0.0d0
   dx=L/N
   dt=0.001d0
+!  dt=alpha*rho*c*dx**2/kappa
   write(*,*)"dt is",dt
   u=0.0d0
   uold=0.0d0
   
   do j=1,N+2
     x(j)=(j-1.5d0)*dx
+    uold(j)=DEXP(x(j))
+    
+!Modified the temperature of vitual points to meet the B.C.     
+    
+    u(1)=-u(2)
+    u(N+2)=-u(N+1)
+    
   end do
   
   do j=2,N+1
@@ -43,16 +51,18 @@ Programm main
 
 !  write(*,*)uold
 
-!The main iterative process with FDM scheme1. 
+!The main iterative process with explicit Euler FDM scheme. 
   
   do it=1,nsteps
     
     do j=2,N+1
+
+!Update the temperature of vitual points to meet the B.C.
       
-      u(1)=u(N+1)
-      u(N+2)=u(2)
+      u(1)=-u(2)
+      u(N+2)=-u(N+1)
       
-      k(it)=
+      k(it)=k(it)+u(j)
       rate(it)=
       umax=maxval(u)
     end do
@@ -71,7 +81,7 @@ Programm main
   end do
   
   tend=dt*nsteps
-  write(*,*)"Programm stop at t=",tend
+  write(*,*)"Programm stop at t =",tend
   
   write(54,*)x
   write(55,*)u(j)
