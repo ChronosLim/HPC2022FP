@@ -1,1 +1,19 @@
+#!/bin/bash
 
+#BSUB -J hlly
+#BSUB -q ser
+#BSUB -n 16
+#BSUB -R "span[ptile=40]"
+#BSUB -e error
+#BSUB -o output
+
+module purge
+module load intel/2020.4
+module load mpi/intel/2020.4
+
+./single
+
+mpirun -np 2 ./multi -log_view
+mpirun -np 4 ./multi -log_view
+mpirun -np 8 ./multi -log_view
+mpirun -np 16 ./multi -log_view
