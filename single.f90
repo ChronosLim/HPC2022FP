@@ -6,19 +6,19 @@ Program main
 !  integer,parameter ::N=32
 !  integer,parameter ::N=64
 !  integer,parameter ::N=128
-  integer,parameter ::N=200
+  integer,parameter ::N=100
 
 !Define what parameter will be used.
 
-  real*8 :: pi=4.0d0*atan(1.0d0),Length=1.0d0,rho=1.0d0,c=1.0d0,kappa=1.0d0
+  real*8 :: pi=4.0d0*atan(1.0d0),Length=1.0d0,rho=1.0d0,c=1.0d0,kappa=1.0d0,l=2.0d0
   real*8 :: dx,dt,tend,alpha,sum,sb,umax,e,tol,fo
   real*8,dimension(N+1) :: uold,u,x,uexact
   real*8,dimension(N+1) :: h,f,error
   real*8,dimension(N+1) :: ahe,beh,con,dia
-  integer :: j,it,tex_start,tex_end,tin_start,tin_end,content
-  integer,parameter :: nsteps=2000000
+  integer :: j,it,tex_start,tex_end,tim_start,tim_end,content
+  integer,parameter :: nsteps=5000000
   real*8,dimension(nsteps)::k,rate
-  real*8 ::l,C_1,C_2
+  real*8 ::C_1,C_2
   character(len=32) ::arg
 
 !Initializing of parameter.
@@ -32,8 +32,6 @@ Program main
   f=0.0d0
   dx=Length/N
   dt=0.001d0
-  l=1.0d0
-  alpha=0.5d0
   tol=1.0e-16
   sb=0.0d0
   fo=0.0d0
@@ -50,16 +48,18 @@ Program main
   996 write(*,*)"Without out-source input"
   continue
 
-  dt=alpha*rho*c*dx**2/kappa
+!  alpha=0.5d0
+!  dt=alpha*rho*c*dx**2/kappa
   alpha=dt*kappa/(rho*c*dx**2)
+  write(*,*)"cfl number is",alpha
   write(*,*)"dt for EEFDMS is",dt
   
 !Assertion for explicit Euler scheme.  
   
   if(alpha .gt. 0.5 .or. alpha .lt. 0) then
     write(*,*)"Stability criterion is out of range."
-    write(*,*)"Program stopped."
-    stop 2333
+    write(*,*)"Program EEFDMS stopped."
+    goto 999
   end if
   
   u=0.0d0
@@ -68,7 +68,8 @@ Program main
   tex_end=0
   
 !Create files to store datas.
-  
+
+  open(53,file='uexact.dat',form='formatted',status='unknown')
   open(54,file='x.dat',form='formatted',status='unknown')
   open(55,file='u_EEFDMS.dat',form='formatted',status='unknown')
   open(56,file='h_EEFMDS.dat',form='formatted',status='unknown')
@@ -113,6 +114,7 @@ Program main
   
   sum=sum/(N-1)
   write(*,*)"The exact average temperature is",sum
+  write(53,*)uexact
 
 
 !Go to explicit Euler FDM scheme to solve our PDE
@@ -127,7 +129,7 @@ Program main
   uold(N+1)=0
   
   do j=2,N
-    uold(j)=dexp(x(j))
+    uold(j)=2*dexp(x(j))
   end do
   
   do j=2,N
@@ -190,7 +192,7 @@ Program main
     fo=dabs(sum-sb)
     
     if(mod(it,10000).eq.0.) then
-    write(*,*)fo
+!    write(*,*)fo
     endif
     
     if(fo .lt. tol) write(*,*)"Calculation reaches stable."
@@ -242,15 +244,13 @@ Program main
   rate=0.0d0
   h=0.0d0
   f=0.0d0
-  dx=Length/N
-  dt=0.001d0
-  l=1.0d0
-  alpha=0.5d0
-  tol=1.0e-16
   sb=0.0d0
   fo=0.0d0
   
-  dt=alpha*rho*c*dx**2/kappa
+  999 continue
+  
+!  alpha=0.5d0
+!  dt=alpha*rho*c*dx**2/kappa
   alpha=dt*kappa/(rho*c*dx**2)
   write(*,*)"dt for IEFDMS is",dt
   
@@ -258,19 +258,19 @@ Program main
   
   if(alpha .lt. 0) then
     write(*,*)"Stability criterion is out of range."
-    write(*,*)"Program stopped."
-    stop 2345
+    write(*,*)"Program IEFDMS stopped."
+    stop 2333
   end if
 
   uold=0.0d0
   u=0.0d0
-  tin_start=0
-  tin_end=0
+  tim_start=0
+  tim_end=0
   
-  call system_clock(tin_start)
+  call system_clock(tim_start)
   
   do j=2,N
-    uold(j)=dexp(x(j))
+    uold(j)=2*dexp(x(j))
     
 !Modified the temperature of vitual points to meet the B.C.     
     
@@ -350,7 +350,7 @@ Program main
     fo=dabs(sum-sb)
     
     if(mod(it,10000).eq.0.) then
-    write(*,*)fo
+!    write(*,*)fo
     endif
     
     if(fo .lt. tol) write(*,*)"Calculation reaches stable."
@@ -366,10 +366,10 @@ Program main
   
   write(*,*)"The error of implicit Euler FDM scheme is",e
   
-  call system_clock(tex_end)
+  call system_clock(tim_end)
   
-  write(*,*)"The time cost of singlethreading program to solve IEFDMS:",tex_end&
-  -tex_start,"ms"
+  write(*,*)"The time cost of singlethreading program to solve IEFDMS:",tim_end&
+  -tim_start,"ms"
   
   do j=2,N
     sum=sum+u(j)
