@@ -31,10 +31,23 @@ Program main
   h=0.0d0
   f=0.0d0
   dx=Length/N
-  dt=0.001d0
+  dt=0.00004d0
   tol=1.0e-16
   sb=0.0d0
   fo=0.0d0
+  
+!Create files to store datas.
+
+  open(53,file='uexact.dat',form='formatted',status='unknown')
+  open(54,file='x.dat',form='formatted',status='unknown')
+  open(55,file='u_EEFDMS.dat',form='formatted',status='unknown')
+  open(56,file='h_EEFMDS.dat',form='formatted',status='unknown')
+  open(57,file='k_EEFMDS.dat',form='formatted',status='unknown')
+  open(58,file='rate_EEFMDS.dat',form='formatted',status='unknown')
+  open(59,file='u_IEFMDS.dat',form='formatted',status='unknown')
+  open(60,file='h_IEFMDS.dat',form='formatted',status='unknown')
+  open(61,file='k_IEFMDS.dat',form='formatted',status='unknown')
+  open(62,file='rate_IEFMDS.dat',form='formatted',status='unknown')
   
 !Reset the initial value of N and dt from command line.
 !The first argument should be an integer for N, and the second argument should be a &
@@ -67,18 +80,7 @@ Program main
   tex_start=0
   tex_end=0
   
-!Create files to store datas.
 
-  open(53,file='uexact.dat',form='formatted',status='unknown')
-  open(54,file='x.dat',form='formatted',status='unknown')
-  open(55,file='u_EEFDMS.dat',form='formatted',status='unknown')
-  open(56,file='h_EEFMDS.dat',form='formatted',status='unknown')
-  open(57,file='k_EEFMDS.dat',form='formatted',status='unknown')
-  open(58,file='rate_EEFMDS.dat',form='formatted',status='unknown')
-  open(59,file='u_IEFMDS.dat',form='formatted',status='unknown')
-  open(60,file='h_IEFMDS.dat',form='formatted',status='unknown')
-  open(61,file='k_IEFMDS.dat',form='formatted',status='unknown')
-  open(62,file='rate_IEFMDS.dat',form='formatted',status='unknown')
 
 !Calculate the excact solution under I.C.:f=sin(pi*l*x),u0=e^x, u(0,t)=u(1,t)=0
 !Consider that when t→∞, the temperature distrubition of our 1D domain should be stable, so the spatial integral of heat-source term should be 0.
@@ -129,7 +131,7 @@ Program main
   uold(N+1)=0
   
   do j=2,N
-    uold(j)=2*dexp(x(j))
+    uold(j)=dexp(x(j))
   end do
   
   do j=2,N
@@ -270,7 +272,7 @@ Program main
   call system_clock(tim_start)
   
   do j=2,N
-    uold(j)=2*dexp(x(j))
+    uold(j)=dexp(x(j))
     
 !Modified the temperature of vitual points to meet the B.C.     
     
@@ -296,19 +298,28 @@ Program main
 
 !The main iterative process under implicit Euler FDM scheme. 
   
+  ahe=0.0d0
+  beh=0.0d0
+  dia=0.0d0
+  ahe(3:N)=-alpha
+  beh(2:N-1)=-alpha
+  dia(2:N)=1+2*alpha
+  
   do it=1,nsteps
     
     sum=0.0d0
     sb=0.0d0
     
-    ahe(3:N)=-alpha
-    beh(2:N-1)=-alpha
-    do j=1,N+1
+    con(1)=0.0d0
+    con(N+1)=0.0d0
+    
+    do j=2,N
+      con(1)=0.0d0
+      con(N+1)=0.0d0
       con(j)=uold(j)+f(j)
     end do
-    dia(2:N)=1+2*alpha
     
-    call sy(2,N,beh,dia,ahe,con)
+    call sy(2,N,ahe,dia,beh,con)
     
 !Update the temperature of vitual points to meet the B.C.
 
